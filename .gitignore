@@ -1,0 +1,10 @@
+# Launch drafts stay private
+launch/
+# Copied into site/ at deploy time
+site/install.sh
+site/uninstall.sh
+site/bin/
+site/app/
+site/scripts/
+.vercel
+.DS_Store

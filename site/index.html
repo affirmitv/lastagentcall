@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Last Call for Claude Code agents</title>
+<meta name="description" content="A free, open source macOS tool that gives your Claude Code agents a last call before the battery dies: they write a handoff note, commit their work, and stop cleanly.">
+<meta property="og:title" content="Last Call: your agents wrap up before the battery dies">
+<meta property="og:description" content="Free and open source. One line to install. Your Claude Code agents write a handoff note and commit their work before your Mac goes dark.">
+<meta property="og:url" content="https://lastagentcall.com">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='9' width='23' height='14' rx='3' fill='none' stroke='%23161412' stroke-width='2.5'/%3E%3Crect x='27' y='13' width='3' height='6' rx='1' fill='%23161412'/%3E%3Crect x='6' y='12' width='5' height='8' rx='1' fill='%23d6452a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f4f0e8;
+    --paper-2: #ebe5d8;
+    --ink: #161412;
+    --ink-2: #4a453e;
+    --line: #d8d0c0;
+    --warn: #e0a019;
+    --wrap: #e2702a;
+    --stop: #d6452a;
+    --ok: #3f8f5a;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 17px/1.55 Inter, system-ui, sans-serif;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+
+  header { display: flex; justify-content: space-between; align-items: center; padding: 22px 0; }
+  .brand { font: 800 19px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -0.01em; text-decoration: none; }
+  .brand span { color: var(--stop); }
+  @media (max-width: 420px) { header nav a:first-child { display: none; } }
+  header nav a { font-weight: 500; font-size: 15px; text-decoration: none; margin-left: 20px; color: var(--ink-2); }
+  header nav a:hover { color: var(--ink); }
+
+  .hero > * { min-width: 0; }
+  .hero { display: grid; gap: 40px; padding: 40px 0 64px; align-items: center; }
+  @media (min-width: 880px) { .hero { grid-template-columns: 1.15fr 0.85fr; padding: 72px 0 96px; } }
+  h1 {
+    font: 800 clamp(40px, 7vw, 72px)/0.98 "Bricolage Grotesque", sans-serif;
+    letter-spacing: -0.03em;
+    margin: 0 0 22px;
+  }
+  .lede { font-size: 19px; color: var(--ink-2); max-width: 34em; margin: 0 0 30px; }
+
+  .install {
+    display: flex; align-items: stretch; max-width: 560px;
+    background: var(--ink); color: var(--paper); border-radius: 12px; overflow: hidden;
+  }
+  .install code {
+    flex: 1; min-width: 0; padding: 16px 18px; font: 500 15px/1.4 Inter, sans-serif;
+    white-space: nowrap; overflow-x: auto;
+  }
+  .install code b { color: #f0b34a; font-weight: 600; }
+  .install button {
+    border: 0; background: #2b2724; color: var(--paper); font: 600 14px Inter, sans-serif;
+    padding: 0 18px; cursor: pointer;
+  }
+  .install button:hover { background: #3a3531; }
+  .sub { font-size: 14px; color: var(--ink-2); margin-top: 12px; }
+  .sub a { color: var(--ink); }
+
+  /* Battery that drains on a loop */
+  .demo { background: var(--paper-2); border: 1px solid var(--line); border-radius: 18px; padding: 28px; }
+  .battery { display: flex; align-items: center; gap: 6px; margin-bottom: 22px; }
+  .cell { position: relative; flex: 1; height: 74px; border: 4px solid var(--ink); border-radius: 14px; padding: 5px; }
+  .nub { width: 9px; height: 26px; background: var(--ink); border-radius: 0 4px 4px 0; }
+  .fill { height: 100%; border-radius: 7px; background: var(--ok); animation: drain 12s linear infinite; }
+  .pct { position: absolute; inset: 0; display: grid; place-items: center; font: 800 28px "Bricolage Grotesque", sans-serif; }
+  .pct span { position: absolute; opacity: 0; animation: 12s linear infinite; }
+  .pct .p1 { animation-name: show1; } .pct .p2 { animation-name: show2; } .pct .p3 { animation-name: show3; } .pct .p4 { animation-name: show4; }
+  @keyframes drain {
+    0%   { width: 34%; background: var(--ok); }
+    22%  { width: 20%; background: var(--warn); }
+    47%  { width: 20%; background: var(--warn); }
+    50%  { width: 10%; background: var(--wrap); }
+    72%  { width: 10%; background: var(--wrap); }
+    75%  { width: 5%;  background: var(--stop); }
+    97%  { width: 5%;  background: var(--stop); }
+    100% { width: 34%; background: var(--ok); }
+  }
+  .log { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .log li {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; font-size: 15px; opacity: 0.3; animation: 12s linear infinite;
+  }
+  .log li strong { display: block; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 2px; }
+  .log .l1 { animation-name: show-l1; } .log .l2 { animation-name: show-l2; } .log .l3 { animation-name: show-l3; }
+  .log .l1 strong { color: #a87412; } .log .l2 strong { color: #b8531a; } .log .l3 strong { color: var(--stop); }
+  @keyframes show1 { 0%,21% { opacity: 1; } 22%,100% { opacity: 0; } }
+  @keyframes show2 { 0%,21% { opacity: 0; } 22%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+  @keyframes show3 { 0%,49% { opacity: 0; } 50%,74% { opacity: 1; } 75%,100% { opacity: 0; } }
+  @keyframes show4 { 0%,74% { opacity: 0; } 75%,99% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes show-l1 { 0%,21% { opacity: 0.3; } 22%,99% { opacity: 1; } 100% { opacity: 0.3; } }
+  @keyframes show-l2 { 0%,49% { opacity: 0.3; } 50%,99% { opacity: 1; } 100% { opacity: 0.3; } }
+  @keyframes show-l3 { 0%,74% { opacity: 0.3; } 75%,99% { opacity: 1; } 100% { opacity: 0.3; } }
+
+  section { padding: 64px 0; border-top: 1px solid var(--line); }
+  h2 { font: 800 clamp(28px, 4vw, 40px)/1.05 "Bricolage Grotesque", sans-serif; letter-spacing: -0.02em; margin: 0 0 14px; }
+  .intro { color: var(--ink-2); max-width: 40em; margin: 0 0 36px; }
+
+  .levels { display: grid; gap: 16px; }
+  @media (min-width: 760px) { .levels { grid-template-columns: repeat(3, 1fr); } }
+  .level { background: var(--paper-2); border-radius: 16px; padding: 24px; border-top: 6px solid; }
+  .level.a { border-color: var(--warn); } .level.b { border-color: var(--wrap); } .level.c { border-color: var(--stop); }
+  .level .num { font: 800 48px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -0.03em; }
+  .level h3 { font: 700 20px "Bricolage Grotesque", sans-serif; margin: 10px 0 8px; }
+  .level p { margin: 0; color: var(--ink-2); font-size: 16px; }
+  .plugged { margin-top: 18px; color: var(--ink-2); font-size: 16px; }
+  .plugged b { color: var(--ok); }
+
+  .how { display: grid; gap: 28px; }
+  @media (min-width: 760px) { .how { grid-template-columns: repeat(2, 1fr); } }
+  .how h3 { font: 700 20px "Bricolage Grotesque", sans-serif; margin: 0 0 6px; }
+  .how p { margin: 0; color: var(--ink-2); }
+
+  .faq { max-width: 760px; }
+  .faq details { border-bottom: 1px solid var(--line); padding: 18px 0; }
+  .faq summary { cursor: pointer; font: 700 19px "Bricolage Grotesque", sans-serif; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-weight: 500; }
+  .faq details[open] summary::after { content: "\2212"; }
+  .faq p { color: var(--ink-2); margin: 10px 0 0; }
+
+  .story { background: var(--ink); color: var(--paper); border-radius: 18px; padding: 32px; border: 0; margin: 0 0 64px; }
+  .story p { font-size: 19px; max-width: 38em; margin: 0; }
+  .story p + p { margin-top: 12px; color: #c9c1b3; font-size: 16px; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; font-size: 15px; color: var(--ink-2); }
+  footer a { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/">Last Call<span>.</span></a>
+    <nav>
+      <a href="#levels">Levels</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/affirmitv/lastagentcall">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Your agents get a last call before the battery dies.</h1>
+      <p class="lede">Last Call is a free, open source Claude Code hook for macOS. When your laptop runs low, every agent session finishes its step, writes a handoff note, commits its work to a branch, and stops. Nothing gets lost when the screen goes black.</p>
+      <div class="install">
+        <code id="cmd"><b>curl</b> -fsSL https://lastagentcall.com/install.sh | bash</code>
+        <button type="button" id="copy">Copy</button>
+      </div>
+      <p class="sub">macOS 13 or later. Merges into your existing hooks and backs up your settings first. <a href="https://github.com/affirmitv/lastagentcall/blob/main/install.sh">Read the script</a>.</p>
+    </div>
+    <div class="demo" aria-label="A battery draining from 34 percent to 5 percent while Last Call steps through its three levels">
+      <div class="battery">
+        <div class="cell"><div class="fill"></div>
+          <div class="pct"><span class="p1">34%</span><span class="p2">20%</span><span class="p3">10%</span><span class="p4">5%</span></div>
+        </div>
+        <div class="nub"></div>
+      </div>
+      <ul class="log">
+        <li class="l1"><strong>20%</strong>Finish the current step. No new builds or subagent fan-outs.</li>
+        <li class="l2"><strong>10%</strong>Write HANDOFF.md, commit to lastcall/wip, stop.</li>
+        <li class="l3"><strong>5%</strong>Only the handoff note and git are allowed.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="story">
+    <p>My Mac died tonight with a dozen agents running and I lost track of what they did. So I built Last Call.</p>
+    <p>Steven Ojo, Affirmi</p>
+  </div>
+
+  <section id="levels">
+    <h2>Three levels, then silence.</h2>
+    <p class="intro">Last Call reads your battery on every prompt and tool call. It takes about 10 milliseconds, makes no network calls, and if anything goes wrong it steps aside and lets the tool run.</p>
+    <div class="levels">
+      <div class="level a">
+        <div class="num">20%</div>
+        <h3>Heads up</h3>
+        <p>Each agent is told the battery level and asked to finish the current step without starting long jobs like builds, full test suites, or subagent fan-outs.</p>
+      </div>
+      <div class="level b">
+        <div class="num">10%</div>
+        <h3>Wrap up</h3>
+        <p>Subagents and long commands are blocked. The agent writes <b>.lastcall/HANDOFF.md</b> with what was done, what is in flight, the exact next steps and the files touched, then commits to a <b>lastcall/wip</b> branch without pushing, and stops.</p>
+      </div>
+      <div class="level c">
+        <div class="num">5%</div>
+        <h3>Last call</h3>
+        <p>Every tool is blocked except writing the handoff note and git. Whatever the agent was doing, the record of it gets saved.</p>
+      </div>
+    </div>
+    <p class="plugged"><b>Plug in</b> and it all clears. No messages, no blocks. On a desktop Mac with no battery, Last Call does nothing at all.</p>
+  </section>
+
+  <section>
+    <h2>How it works</h2>
+    <p class="intro">Two small pieces. The hook does the real work and needs nothing else.</p>
+    <div class="how">
+      <div>
+        <h3>A Claude Code hook</h3>
+        <p>A short shell script runs on PreToolUse, PostToolUse and UserPromptSubmit. It reads <b>pmset</b>, adds context the model sees, and denies tools with a reason when the level calls for it. Thresholds live in ~/.lastcall/config.</p>
+      </div>
+      <div>
+        <h3>A menu bar app</h3>
+        <p>Shows your battery, how many Claude processes are running, and the current level. "Wrap up all agents now" sends every session to the 10% level on demand. It notifies you at each level and lists recent handoff notes. Built from source on your Mac during install.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <h2>Questions</h2>
+    <div class="faq">
+      <details open>
+        <summary>What does it actually do?</summary>
+        <p>It gives every running Claude Code session a warning and then a clear instruction to save its state: a handoff note in the project and a work in progress commit on its own branch. At the lowest level it blocks everything else so the save is the last thing that happens.</p>
+      </details>
+      <details>
+        <summary>Does it move my sessions to another machine?</summary>
+        <p>No. It keeps the record of what happened so you can pick up anywhere. On the same Mac, run <b>claude --resume</b>. On any machine, pull the lastcall/wip branch and start a fresh session that reads .lastcall/HANDOFF.md.</p>
+      </details>
+      <details>
+        <summary>Will it break my existing hooks or slow me down?</summary>
+        <p>The installer backs up ~/.claude/settings.json and merges its three entries next to yours. The hook runs in about 10 milliseconds, never touches the network, and fails open: if it cannot read the battery or the input, the tool runs as normal.</p>
+      </details>
+      <details>
+        <summary>Does it push my code anywhere?</summary>
+        <p>No. The commit stays on a local branch. Pushing is up to you.</p>
+      </details>
+      <details>
+        <summary>Can I try it without draining my battery?</summary>
+        <p>Yes. Start a session with <b>LASTCALL_FAKE_BATTERY=8 claude</b> and watch it wrap up. Or use "Wrap up all agents now" from the menu bar.</p>
+      </details>
+      <details>
+        <summary>How do I remove it?</summary>
+        <p><b>curl -fsSL https://lastagentcall.com/uninstall.sh | bash</b> removes the hook entries, the app and ~/.lastcall, and leaves your other settings exactly as they were.</p>
+      </details>
+      <details>
+        <summary>What does it cost?</summary>
+        <p>Nothing. It is MIT licensed and the code is on GitHub.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <span>Made by <a href="https://affirmi.tv">Affirmi</a></span>
+    <span><a href="https://github.com/affirmitv/lastagentcall">Source on GitHub</a> · MIT license</span>
+  </footer>
+</div>
+<script>
+  document.getElementById('copy').addEventListener('click', function () {
+    var b = this;
+    var text = document.getElementById('cmd').textContent;
+    var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+  });
+</script>
+</body>
+</html>
