@@ -12,36 +12,42 @@ say() { printf '  %s\n' "$*"; }
 
 echo "Removing Last Call"
 
+BASE_URL="${LASTCALL_BASE_URL:-https://lastagentcall.com}"
+UNHOOK_FAILED=0
 if [ -f "$SETTINGS" ]; then
   BACKUP="$SETTINGS.lastcall-backup-$(date +%Y%m%d-%H%M%S)"
   cp -p "$SETTINGS" "$BACKUP"
   say "backup      $BACKUP"
-  if [ "${LASTCALL_USE_JQ:-0}" != "1" ] && command -v python3 >/dev/null 2>&1 && python3 -c 'import json' >/dev/null 2>&1; then
-    HELPER="$LC/bin/lastcall-settings.py"
-    if [ ! -f "$HELPER" ]; then
-      HELPER="$(mktemp)"; curl -fsSL "${LASTCALL_BASE_URL:-https://lastagentcall.com}/scripts/settings.py" -o "$HELPER"
+  HELPER="$LC/bin/lastcall-settings.py"
+  if [ ! -f "$HELPER" ]; then
+    # Installed copy is gone: fetch the helper and check it against SHA256SUMS.
+    DL="$(mktemp -d)"; trap 'rm -rf "$DL"' EXIT
+    HELPER="$DL/settings.py"
+    if curl -fsSL "$BASE_URL/SHA256SUMS" -o "$DL/SHA256SUMS" && curl -fsSL "$BASE_URL/scripts/settings.py" -o "$HELPER"; then
+      want="$(awk '$2=="scripts/settings.py" {print $1}' "$DL/SHA256SUMS")"
+      got="$(shasum -a 256 "$HELPER" | awk '{print $1}')"
+      if [ -z "$want" ] || [ "$want" != "$got" ]; then echo "Checksum mismatch for scripts/settings.py." >&2; HELPER=""; fi
+    else
+      echo "Could not download the settings helper." >&2; HELPER=""
     fi
-    python3 "$HELPER" uninstall "$SETTINGS" ""
-  elif command -v jq >/dev/null 2>&1; then
-    tmp="$(mktemp "$(dirname "$SETTINGS")/.settings.XXXXXX")"
-    jq '
-      def strip: map(if (.hooks|type)=="array" then .hooks |= map(select(((.command // "")|tostring|contains("lastcall-hook.sh"))|not)) else . end)
-                 | map(select((.hooks|type)!="array" or (.hooks|length)>0));
-      if (.hooks|type)=="object" then
-        .hooks |= (with_entries(if (.key=="PreToolUse" or .key=="PostToolUse" or .key=="UserPromptSubmit") then .value |= strip else . end)
-                   | with_entries(select((.value|type)!="array" or (.value|length)>0)))
-        | if (.hooks|length)==0 then del(.hooks) else . end
-      else . end
-    ' "$SETTINGS" > "$tmp" && mv "$tmp" "$SETTINGS"
-  else
-    echo "Need python3 or jq to edit $SETTINGS. Remove the lastcall-hook.sh entries by hand." >&2
   fi
-  say "unhooked    $SETTINGS"
+  if [ -n "$HELPER" ] && command -v python3 >/dev/null 2>&1 && python3 "$HELPER" uninstall "$SETTINGS"; then
+    say "unhooked    $SETTINGS"
+  else
+    UNHOOK_FAILED=1
+    echo "Could not remove the hook from $SETTINGS; it was left as it was." >&2
+    echo "Remove the entries that run lastcall-hook.sh by hand, then run this again." >&2
+  fi
 fi
 
-pkill -x LastCall >/dev/null 2>&1 || true
+pkill -f "$APP/Contents/MacOS/LastCall" >/dev/null 2>&1 || true
 if [ -f "$AGENT" ]; then rm -f "$AGENT"; say "removed     $AGENT"; fi
 if [ -d "$APP" ]; then rm -rf "$APP"; say "removed     $APP"; rmdir "$HOME/Applications" 2>/dev/null || true; fi
+if [ "$UNHOOK_FAILED" = 1 ]; then
+  # Keep the hook so settings.json does not point at a missing file.
+  say "kept        $LC (settings.json still runs its hook)"
+  exit 1
+fi
 if [ -d "$LC" ]; then rm -rf "$LC"; say "removed     $LC"; fi
 
 echo

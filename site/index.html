@@ -229,7 +229,7 @@
 <main class="wrap">
   <section class="levels" id="levels">
     <h2>What happens at each level</h2>
-    <p class="lede">Last Call checks the battery on every prompt and tool call. It takes about 10 milliseconds, never touches the network, and if anything goes wrong it steps aside and lets the tool run.</p>
+    <p class="lede">Last Call checks the battery on every prompt and tool call. It usually takes a few milliseconds, never touches the network, and if anything goes wrong it steps aside and lets the tool run.</p>
 
     <div class="scale" id="scale" aria-label="Battery scale from 100 percent to 0 percent with levels at 20, 10 and 5 percent">
       <div class="ticks"><span style="left:0">100%</span><span style="left:50%">50%</span><span style="left:80%">20</span><span class="n" style="left:90%">10</span><span class="n" style="left:95%">5</span><span style="left:100%">0</span></div>
@@ -245,11 +245,11 @@
         </div></div>
         <div class="row" style="padding-right:5%"><div class="txt" style="border-color:var(--red)">
           <div class="pc">5%</div><div class="nm">Last call</div>
-          <p>Every tool is blocked except writing the handoff note and git, so saving the record is the only thing left to do.</p>
+          <p>Every tool is blocked except writing the handoff note and a short list of local git commands (status, diff, add, commit, stash, a lastcall/wip branch). No push, no reset, no chaining. Saving the record is the only thing left to do.</p>
         </div></div>
       </div>
     </div>
-    <p class="plug"><b>Plugged in, it all clears.</b> No messages, no blocks. On a Mac with no battery, Last Call does nothing at all. Thresholds live in <code>~/.lastcall/config</code>.</p>
+    <p class="plug"><b>Plugged in, it all clears.</b> No messages, no blocks. On a Mac with no battery, Last Call stays out of the way until you pick Wrap up all agents now. Thresholds live in <code>~/.lastcall/config</code>.</p>
   </section>
 
   <section class="menu-sec">
@@ -258,7 +258,7 @@
       <h3>The hook does the work</h3>
       <p>A short shell script runs on PreToolUse, PostToolUse and UserPromptSubmit. It reads <code>pmset</code>, adds context the model sees, and denies tools with a reason when the level calls for it. It needs nothing else.</p>
       <h3>The menu bar item keeps you in the loop</h3>
-      <p>It shows your battery, how many Claude processes are running and the current level, and notifies you when the level changes. <b>Wrap up all agents now</b> sends every session to the 10% level on demand, plugged in or not.</p>
+      <p>It shows your battery, how many Claude processes are running and the current level, and notifies you when the level changes. <b>Wrap up all agents now</b> sends every session to the 10% level on demand, plugged in or not, laptop or desktop.</p>
       <p>It is built from source on your Mac during install, so there is nothing to notarize and nothing phoning home.</p>
     </div>
     <div>
@@ -286,15 +286,17 @@
       <dt>Does it move my sessions to another machine?</dt>
       <dd>No. It keeps the record so you can pick up anywhere. On the same Mac, run <code>claude --resume</code>. Anywhere else, pull the lastcall/wip branch and start a session that reads .lastcall/HANDOFF.md.</dd>
       <dt>Will it break my existing hooks?</dt>
-      <dd>No. The installer backs up ~/.claude/settings.json and adds its three entries next to yours. If the hook cannot read the battery or its input, the tool runs as normal.</dd>
+      <dd>No. The installer backs up ~/.claude/settings.json and adds its three entries next to yours. If the file is not valid JSON, it stops before changing anything. If the hook cannot read the battery or its input, the tool runs as normal and the reason goes to ~/.lastcall/lastcall.log.</dd>
       <dt>What is enforced, and what is guidance?</dt>
-        <dd>Blocking is enforced by the hook: at 10% subagents and long commands are refused, and at 5% every tool except the handoff note and git is refused. The model does not get a vote. Long commands at 10% are recognized by name (builds, test runs, docker and similar), so an unusual command can slip through; at 5% nothing but the handoff note and git runs. Writing the handoff and committing are instructions the agent is given; a good model follows them, but Last Call does not write or commit anything itself. If there is nothing to commit, it will not commit.</dd>
+        <dd>Blocking is enforced by the hook: at 10% subagents and long commands are refused, and at 5% every tool except the handoff note and git is refused. The model does not get a vote. Long commands at 10% are recognized by name (installs, builds, test runs, docker, make, long sleeps and similar, also behind env, time or sh -c), so an unusual command or a custom script can slip through. At 5% the rule is an exact allowlist: the handoff note, and one plain local git command at a time with no shell syntax. Push, reset, clean, rebase and the rest are refused. Writing the handoff and committing are instructions the agent is given; a good model follows them, but Last Call does not write or commit anything itself. If there is nothing to commit, it will not commit.</dd>
         <dt>Does it push my code anywhere?</dt>
-      <dd>No. The commit stays on a local branch. Pushing is up to you.</dd>
+      <dd>No. The commit stays on a local branch, and at 5% git push is refused. Pushing is up to you.</dd>
       <dt>Can I try it without draining my battery?</dt>
       <dd>Start a session with <code>LASTCALL_FAKE_BATTERY=8 claude</code>, or pick Wrap up all agents now from the menu bar.</dd>
       <dt>How do I remove it?</dt>
       <dd><code>curl -fsSL https://lastagentcall.com/uninstall.sh | bash</code> removes the hook entries, the app and ~/.lastcall, and leaves your other settings as they were.</dd>
+      <dt>How do I know the installer got the right files?</dt>
+      <dd>When piped through curl, install.sh checks every file it downloads against <a href="/SHA256SUMS">SHA256SUMS</a> and installs nothing on a mismatch. That catches broken or mismatched downloads. The list is served from this site too, so to check provenance, compare it with the copy in the GitHub repo, or install from a checkout.</dd>
       <dt>What does it cost?</dt>
       <dd>Nothing. MIT licensed.</dd>
     </dl>
@@ -356,7 +358,7 @@
 
   // The session. Hook text is exactly what bin/lastcall-hook.sh prints.
   var TS = '20260926-231408';
-  var HANDOFF = 'Write .lastcall/HANDOFF.md at the project root with four sections: what was done, what is in flight, exact next steps, files touched. Then commit work in progress on a new branch without pushing: git switch -c lastcall/wip-' + TS + ' &amp;&amp; git add -A &amp;&amp; git commit -m "Last Call WIP". Then stop and tell the user where the handoff is.';
+  var HANDOFF = 'Write .lastcall/HANDOFF.md at the project root with four sections: what was done, what is in flight, exact next steps, files touched. Then commit work in progress on a new branch without pushing, one git command per call (no &amp;&amp; or ;): git switch -c lastcall/wip-' + TS + ', then git add -A, then git commit -m "Last Call WIP". Then stop and tell the user where the handoff is.';
   var D = '<span class="dot">●</span> ', OK = '<span class="ok">●</span> ', NO = '<span class="no">●</span> ', E = '⎿  ';
   var script = [
     [0,    { pct: 34 }],
@@ -379,7 +381,9 @@
     [900,  { html: OK + '<span class="tool">Write</span>(.lastcall/HANDOFF.md)<span class="sub">' + E + 'Wrote 23 lines to .lastcall/HANDOFF.md<span class="in">## What was done</span><span class="in">## In flight</span><span class="in">## Exact next steps</span><span class="in">## Files touched</span></span>', cls: 'gap' }],
     [900,  { pct: 7 }],
     [900,  { pct: 5 }],
-    [800,  { html: OK + '<span class="tool">Bash</span>(git switch -c lastcall/wip-' + TS + ' &amp;&amp; git add -A &amp;&amp; git commit -m "Last Call WIP")<span class="sub">' + E + 'Switched to a new branch \'lastcall/wip-' + TS + '\'<span class="in">[lastcall/wip-' + TS + ' 8c41e0d] Last Call WIP</span><span class="in"> 3 files changed, 49 insertions(+), 13 deletions(-)</span></span>', cls: 'gap' }],
+    [800,  { html: OK + '<span class="tool">Bash</span>(git switch -c lastcall/wip-' + TS + ')<span class="sub">' + E + 'Switched to a new branch \'lastcall/wip-' + TS + '\'</span>', cls: 'gap' }],
+    [500,  { html: OK + '<span class="tool">Bash</span>(git add -A)<span class="sub">' + E + '(No output)</span>', cls: 'gap' }],
+    [600,  { html: OK + '<span class="tool">Bash</span>(git commit -m "Last Call WIP")<span class="sub">' + E + '[lastcall/wip-' + TS + ' 8c41e0d] Last Call WIP<span class="in"> 3 files changed, 49 insertions(+), 13 deletions(-)</span></span>', cls: 'gap' }],
     [1300, { html: D + 'Stopping here. The handoff is in .lastcall/HANDOFF.md and the work is committed on lastcall/wip-' + TS + ' (not pushed). Tests were not run; that is the first next step.', cls: 'gap' }],
     [600,  { html: '<span class="pr u">&gt; <span class="cursor">&nbsp;</span></span>', cls: 'gap' }],
     [6500, { restart: true }]
