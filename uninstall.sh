@@ -41,7 +41,7 @@ fi
 
 pkill -x LastCall >/dev/null 2>&1 || true
 if [ -f "$AGENT" ]; then rm -f "$AGENT"; say "removed     $AGENT"; fi
-if [ -d "$APP" ]; then rm -rf "$APP"; say "removed     $APP"; fi
+if [ -d "$APP" ]; then rm -rf "$APP"; say "removed     $APP"; rmdir "$HOME/Applications" 2>/dev/null || true; fi
 if [ -d "$LC" ]; then rm -rf "$LC"; say "removed     $LC"; fi
 
 echo
