@@ -2,7 +2,7 @@
 
 Your Claude Code agents get a last call before the battery dies.
 
-Last Call is a free, open source Claude Code hook for macOS. When your laptop runs low, every agent session finishes its step, writes a handoff note, commits its work to a local branch, and stops. When the screen goes black, the record of what each agent was doing is already saved.
+Last Call is a free, open source Claude Code hook for macOS. When your laptop runs low, every agent session is told to finish its step, write a handoff note, commit its work to a local branch, and stop. Blocking is enforced by the hook; the wrap-up is guidance the agent follows. When the screen goes black, the record of what each agent was doing is already saved.
 
 Site: https://lastagentcall.com
 

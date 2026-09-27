@@ -208,7 +208,7 @@
   <div class="stage">
     <div class="intro">
       <p class="name">Last Call, for Claude Code on macOS</p>
-      <h1>When your battery runs low, every agent writes down what it was doing, commits, and stops.</h1>
+      <h1>When your battery runs low, every agent is told to write down what it was doing, commit, and stop.</h1>
       <p class="note">My Mac died tonight with a dozen agents running and I lost track of what they did. So I built Last Call.</p>
       <p class="sig">Steven Ojo</p>
       <div class="install">
@@ -240,11 +240,11 @@
         </div></div>
         <div class="row" style="padding-right:10%"><div class="txt" style="border-color:var(--orange)">
           <div class="pc">10%</div><div class="nm">Wrap up</div>
-          <p>Subagents and long commands are blocked. The agent writes <code>.lastcall/HANDOFF.md</code> with what was done, what is in flight, the exact next steps and the files touched, commits to a <code>lastcall/wip</code> branch without pushing, and stops.</p>
+          <p>Subagents and long commands are blocked. The agent is told to write <code>.lastcall/HANDOFF.md</code> with what was done, what is in flight, the exact next steps and the files touched, commit to a <code>lastcall/wip</code> branch without pushing, and stop.</p>
         </div></div>
         <div class="row" style="padding-right:5%"><div class="txt" style="border-color:var(--red)">
           <div class="pc">5%</div><div class="nm">Last call</div>
-          <p>Every tool is blocked except writing the handoff note and git. Whatever the agent was doing, the record of it gets saved.</p>
+          <p>Every tool is blocked except writing the handoff note and git, so saving the record is the only thing left to do.</p>
         </div></div>
       </div>
     </div>
@@ -286,7 +286,9 @@
       <dd>No. It keeps the record so you can pick up anywhere. On the same Mac, run <code>claude --resume</code>. Anywhere else, pull the lastcall/wip branch and start a session that reads .lastcall/HANDOFF.md.</dd>
       <dt>Will it break my existing hooks?</dt>
       <dd>No. The installer backs up ~/.claude/settings.json and adds its three entries next to yours. If the hook cannot read the battery or its input, the tool runs as normal.</dd>
-      <dt>Does it push my code anywhere?</dt>
+      <dt>What is enforced, and what is guidance?</dt>
+        <dd>Blocking is enforced by the hook: at 10% subagents and long commands are refused, and at 5% every tool except the handoff note and git is refused. The model does not get a vote. Long commands at 10% are recognized by name (builds, test runs, docker and similar), so an unusual command can slip through; at 5% nothing but the handoff note and git runs. Writing the handoff and committing are instructions the agent is given; a good model follows them, but Last Call does not write or commit anything itself. If there is nothing to commit, it will not commit.</dd>
+        <dt>Does it push my code anywhere?</dt>
       <dd>No. The commit stays on a local branch. Pushing is up to you.</dd>
       <dt>Can I try it without draining my battery?</dt>
       <dd>Start a session with <code>LASTCALL_FAKE_BATTERY=8 claude</code>, or pick Wrap up all agents now from the menu bar.</dd>
