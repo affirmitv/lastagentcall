@@ -3,269 +3,425 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Last Call for Claude Code agents</title>
+<title>Last Call for Claude Code</title>
 <meta name="description" content="A free, open source macOS tool that gives your Claude Code agents a last call before the battery dies: they write a handoff note, commit their work, and stop cleanly.">
 <meta property="og:title" content="Last Call: your agents wrap up before the battery dies">
 <meta property="og:description" content="Free and open source. One line to install. Your Claude Code agents write a handoff note and commit their work before your Mac goes dark.">
 <meta property="og:url" content="https://lastagentcall.com">
 <meta name="twitter:card" content="summary">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='9' width='23' height='14' rx='3' fill='none' stroke='%23161412' stroke-width='2.5'/%3E%3Crect x='27' y='13' width='3' height='6' rx='1' fill='%23161412'/%3E%3Crect x='6' y='12' width='5' height='8' rx='1' fill='%23d6452a'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='9' width='23' height='14' rx='3.5' fill='none' stroke='%231d1d1f' stroke-width='2.2'/%3E%3Crect x='27' y='13.5' width='2.5' height='5' rx='1' fill='%231d1d1f'/%3E%3Crect x='5.5' y='11.5' width='4' height='9' rx='1.5' fill='%23ff3b30'/%3E%3C/svg%3E">
 <style>
   :root {
-    --paper: #f4f0e8;
-    --paper-2: #ebe5d8;
-    --ink: #161412;
-    --ink-2: #4a453e;
-    --line: #d8d0c0;
-    --warn: #e0a019;
-    --wrap: #e2702a;
-    --stop: #d6452a;
-    --ok: #3f8f5a;
+    --sys: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    /* macOS light window + label colors */
+    --win: #ececec;
+    --label: rgba(0,0,0,0.86);
+    --label-2: rgba(0,0,0,0.56);
+    --label-3: rgba(0,0,0,0.30);
+    --sep: rgba(0,0,0,0.12);
+    --blue: #007aff;
+    /* macOS system colors */
+    --green: #34c759; --yellow: #ffcc00; --orange: #ff9500; --red: #ff3b30;
+    --green-d: #30d158; --yellow-d: #ffd60a; --orange-d: #ff9f0a; --red-d: #ff453a;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
-  body {
-    margin: 0;
-    background: var(--paper);
-    color: var(--ink);
-    font: 17px/1.55 Inter, system-ui, sans-serif;
-  }
-  a { color: inherit; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
-  @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+  body { margin: 0; background: var(--win); color: var(--label); font: 16px/1.5 var(--sys); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, kbd { font-family: var(--sys); font-weight: 600; font-size: inherit; }
 
-  header { display: flex; justify-content: space-between; align-items: center; padding: 22px 0; }
-  .brand { font: 800 19px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -0.01em; text-decoration: none; }
-  .brand span { color: var(--stop); }
-  @media (max-width: 420px) { header nav a:first-child { display: none; } }
-  header nav a { font-weight: 500; font-size: 15px; text-decoration: none; margin-left: 20px; color: var(--ink-2); }
-  header nav a:hover { color: var(--ink); }
-
-  .hero > * { min-width: 0; }
-  .hero { display: grid; gap: 40px; padding: 40px 0 64px; align-items: center; }
-  @media (min-width: 880px) { .hero { grid-template-columns: 1.15fr 0.85fr; padding: 72px 0 96px; } }
-  h1 {
-    font: 800 clamp(40px, 7vw, 72px)/0.98 "Bricolage Grotesque", sans-serif;
-    letter-spacing: -0.03em;
-    margin: 0 0 22px;
+  /* ---------- The desktop ---------- */
+  .desktop {
+    position: relative; overflow: hidden; color: #fff;
+    background-color: #1b3b58;
+    background-image:
+      radial-gradient(1200px 700px at 12% 110%, #3d6f93 0%, rgba(61,111,147,0) 60%),
+      radial-gradient(900px 600px at 95% -10%, #28577e 0%, rgba(40,87,126,0) 65%),
+      radial-gradient(700px 500px at 60% 60%, #214a6d 0%, rgba(33,74,109,0) 70%);
+    padding-bottom: 56px;
   }
-  .lede { font-size: 19px; color: var(--ink-2); max-width: 34em; margin: 0 0 30px; }
+  .menubar {
+    position: relative; z-index: 3; height: 26px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 10px; font: 13px/1 var(--sys); color: #fff;
+    background: rgba(28, 44, 60, 0.42); -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6);
+    box-shadow: 0 0.5px 0 rgba(255,255,255,0.08);
+  }
+  .menubar .left, .menubar .right { display: flex; align-items: center; height: 100%; white-space: nowrap; }
+  .menubar .left > * , .menubar .right > * { padding: 0 9px; display: flex; align-items: center; height: 100%; }
+  .menubar .app { font-weight: 700; }
+  .menubar svg { display: block; fill: #fff; }
+  .lcitem { border-radius: 4px; height: 20px !important; margin: 0 2px; background: rgba(255,255,255,0.20); font-variant-numeric: tabular-nums; }
+  .lcitem .lvl { margin-left: 4px; }
+  .clock { font-variant-numeric: tabular-nums; }
+  @media (max-width: 760px) { .menubar .hide-s { display: none !important; } }
+  @media (max-width: 420px) { .menubar .hide-xs { display: none !important; } .menubar .left > *, .menubar .right > * { padding: 0 6px; } }
+
+  .notice {
+    position: absolute; z-index: 4; top: 36px; right: 10px; width: 344px; max-width: calc(100% - 20px);
+    padding: 11px 14px 12px; border-radius: 16px; color: #fff; font: 13px/1.35 var(--sys);
+    background: rgba(60, 64, 72, 0.72); -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8);
+    box-shadow: 0 0 0 0.5px rgba(255,255,255,0.18) inset, 0 10px 30px rgba(0,0,0,0.30);
+    transform: translateX(calc(100% + 24px)); transition: transform 0.45s cubic-bezier(.2,.8,.2,1);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .notice.on { transform: none; }
+  .notice .ico { flex: none; width: 34px; height: 34px; border-radius: 8px; background: #e9e9ee; display: grid; place-items: center; }
+  .notice b { display: block; font-weight: 600; }
+  .notice .when { position: absolute; top: 11px; right: 14px; color: rgba(255,255,255,0.55); font-size: 12px; }
+
+  .stage { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 720px) { .stage { padding: 0 32px; } }
+  .intro { padding: 64px 0 36px; max-width: 760px; }
+  .name { font: 600 15px/1 var(--sys); color: rgba(255,255,255,0.72); margin: 0 0 16px; }
+  h1 { font: 700 clamp(32px, 5.2vw, 54px)/1.06 var(--sys); letter-spacing: -0.025em; margin: 0 0 22px; }
+  .note { font-size: 19px; line-height: 1.5; color: rgba(255,255,255,0.88); margin: 0; max-width: 34em; }
+  .sig { color: rgba(255,255,255,0.6); font-size: 15px; margin: 6px 0 28px; }
 
   .install {
-    display: flex; align-items: stretch; max-width: 560px;
-    background: var(--ink); color: var(--paper); border-radius: 12px; overflow: hidden;
+    display: flex; align-items: stretch; max-width: 580px; border-radius: 10px; overflow: hidden;
+    background: rgba(0,0,0,0.28); box-shadow: 0 0 0 0.5px rgba(255,255,255,0.22) inset;
   }
-  .install code {
-    flex: 1; min-width: 0; padding: 16px 18px; font: 500 15px/1.4 Inter, sans-serif;
-    white-space: nowrap; overflow-x: auto;
-  }
-  .install code b { color: #f0b34a; font-weight: 600; }
+  .install code { flex: 1; min-width: 0; padding: 14px 16px; font: 500 14px/1.4 var(--mono); white-space: nowrap; overflow-x: auto; color: #fff; }
   .install button {
-    border: 0; background: #2b2724; color: var(--paper); font: 600 14px Inter, sans-serif;
-    padding: 0 18px; cursor: pointer;
+    flex: none; border: 0; margin: 7px; border-radius: 6px; padding: 0 14px; cursor: pointer;
+    background: #fff; color: #1d1d1f; font: 600 13px var(--sys);
   }
-  .install button:hover { background: #3a3531; }
-  .sub { font-size: 14px; color: var(--ink-2); margin-top: 12px; }
-  .sub a { color: var(--ink); }
-
-  /* Battery that drains on a loop */
-  .demo { background: var(--paper-2); border: 1px solid var(--line); border-radius: 18px; padding: 28px; }
-  .battery { display: flex; align-items: center; gap: 6px; margin-bottom: 22px; }
-  .cell { position: relative; flex: 1; height: 74px; border: 4px solid var(--ink); border-radius: 14px; padding: 5px; }
-  .nub { width: 9px; height: 26px; background: var(--ink); border-radius: 0 4px 4px 0; }
-  .fill { height: 100%; border-radius: 7px; background: var(--ok); animation: drain 12s linear infinite; }
-  .pct { position: absolute; inset: 0; display: grid; place-items: center; font: 800 28px "Bricolage Grotesque", sans-serif; }
-  .pct span { position: absolute; opacity: 0; animation: 12s linear infinite; }
-  .pct .p1 { animation-name: show1; } .pct .p2 { animation-name: show2; } .pct .p3 { animation-name: show3; } .pct .p4 { animation-name: show4; }
-  @keyframes drain {
-    0%   { width: 34%; background: var(--ok); }
-    22%  { width: 20%; background: var(--warn); }
-    47%  { width: 20%; background: var(--warn); }
-    50%  { width: 10%; background: var(--wrap); }
-    72%  { width: 10%; background: var(--wrap); }
-    75%  { width: 5%;  background: var(--stop); }
-    97%  { width: 5%;  background: var(--stop); }
-    100% { width: 34%; background: var(--ok); }
+  .install button:active { background: #d9d9de; }
+  @media (max-width: 600px) {
+    .install { flex-direction: column; }
+    .install code { white-space: normal; font-size: 12.5px; padding: 12px 14px 4px; }
+    .install button { align-self: flex-start; margin: 6px 14px 12px; height: 30px; }
+    .intro { padding-top: 84px; }
+    .ticks .n { display: none; }
   }
-  .log { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-  .log li {
-    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
-    padding: 12px 14px; font-size: 15px; opacity: 0.3; animation: 12s linear infinite;
+  .fine { font-size: 13px; color: rgba(255,255,255,0.6); margin: 10px 0 0; }
+  .fine a { color: #fff; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgba(255,255,255,0.4); }
+
+  /* Terminal.app window */
+  .term {
+    position: relative; max-width: 900px; margin: 18px 0 0 auto; border-radius: 12px; overflow: hidden;
+    background: rgba(30, 30, 32, 0.96);
+    box-shadow: 0 0 0 0.5px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.10) inset, 0 28px 70px rgba(0,0,0,0.45), 0 8px 20px rgba(0,0,0,0.25);
   }
-  .log li strong { display: block; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 2px; }
-  .log .l1 { animation-name: show-l1; } .log .l2 { animation-name: show-l2; } .log .l3 { animation-name: show-l3; }
-  .log .l1 strong { color: #a87412; } .log .l2 strong { color: #b8531a; } .log .l3 strong { color: var(--stop); }
-  @keyframes show1 { 0%,21% { opacity: 1; } 22%,100% { opacity: 0; } }
-  @keyframes show2 { 0%,21% { opacity: 0; } 22%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
-  @keyframes show3 { 0%,49% { opacity: 0; } 50%,74% { opacity: 1; } 75%,100% { opacity: 0; } }
-  @keyframes show4 { 0%,74% { opacity: 0; } 75%,99% { opacity: 1; } 100% { opacity: 0; } }
-  @keyframes show-l1 { 0%,21% { opacity: 0.3; } 22%,99% { opacity: 1; } 100% { opacity: 0.3; } }
-  @keyframes show-l2 { 0%,49% { opacity: 0.3; } 50%,99% { opacity: 1; } 100% { opacity: 0.3; } }
-  @keyframes show-l3 { 0%,74% { opacity: 0.3; } 75%,99% { opacity: 1; } 100% { opacity: 0.3; } }
+  .tbar { height: 30px; display: flex; align-items: center; position: relative; background: #2c2c2e; border-bottom: 1px solid #000; }
+  .lights { display: flex; gap: 8px; padding-left: 12px; }
+  .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.25) inset; }
+  .lights i:nth-child(1) { background: #ff5f57; } .lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+  .ttl { position: absolute; left: 80px; right: 80px; text-align: center; font: 600 13px var(--sys); color: rgba(255,255,255,0.72); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .screen {
+    height: 470px; padding: 12px 14px 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;
+    font: 13px/1.5 var(--mono); color: #e6e6e6; white-space: pre-wrap; word-break: break-word;
+  }
+  @media (max-width: 600px) { .screen { height: 440px; font-size: 11px; padding: 10px; } .ttl { left: 70px; right: 12px; text-align: right; } }
+  .ln { margin: 0; }
+  .ln + .ln { margin-top: 2px; }
+  .gap { margin-top: 10px !important; }
+  .u { color: #9a9a9a; } .u .t { color: #e6e6e6; }
+  .pr { background: #3a3a3c; padding: 2px 6px; margin: 0 -6px; border-radius: 3px; display: block; }
+  .dot { color: #e6e6e6; } .ok { color: #4ec96b; } .no { color: #ff6b61; } .cl { color: #d97757; }
+  .tool { font-weight: 700; color: #fff; }
+  .sub { color: #9a9a9a; padding-left: 2ch; display: block; }
+  .sub .in { display: block; padding-left: 5ch; }
+  .hook { color: #e7c267; }
+  .deny { color: #ff8b82; }
+  .cursor { display: inline-block; width: 0.6em; background: #e6e6e6; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
 
-  section { padding: 64px 0; border-top: 1px solid var(--line); }
-  h2 { font: 800 clamp(28px, 4vw, 40px)/1.05 "Bricolage Grotesque", sans-serif; letter-spacing: -0.02em; margin: 0 0 14px; }
-  .intro { color: var(--ink-2); max-width: 40em; margin: 0 0 36px; }
+  /* ---------- Content on the light window ---------- */
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 720px) { .wrap { padding: 0 32px; } }
+  h2 { font: 700 26px/1.2 var(--sys); letter-spacing: -0.015em; margin: 0 0 8px; }
+  .lede { color: var(--label-2); font-size: 17px; max-width: 38em; margin: 0; }
 
-  .levels { display: grid; gap: 16px; }
-  @media (min-width: 760px) { .levels { grid-template-columns: repeat(3, 1fr); } }
-  .level { background: var(--paper-2); border-radius: 16px; padding: 24px; border-top: 6px solid; }
-  .level.a { border-color: var(--warn); } .level.b { border-color: var(--wrap); } .level.c { border-color: var(--stop); }
-  .level .num { font: 800 48px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -0.03em; }
-  .level h3 { font: 700 20px "Bricolage Grotesque", sans-serif; margin: 10px 0 8px; }
-  .level p { margin: 0; color: var(--ink-2); font-size: 16px; }
-  .plugged { margin-top: 18px; color: var(--ink-2); font-size: 16px; }
-  .plugged b { color: var(--ok); }
+  .levels { padding: 72px 0 40px; }
+  .scale { position: relative; margin: 44px 0 0; }
+  .ticks { position: relative; height: 20px; font: 12px/1 var(--sys); color: var(--label-2); font-variant-numeric: tabular-nums; }
+  .ticks span { position: absolute; top: 0; transform: translateX(-50%); }
+  .ticks span:first-child { transform: none; } .ticks span:last-child { transform: translateX(-100%); }
+  .bar { position: relative; height: 14px; border-radius: 4px; overflow: hidden; display: flex; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.18) inset; }
+  .bar i { display: block; height: 100%; }
+  .rows { position: relative; margin-top: 0; }
+  .row { position: relative; display: flex; justify-content: flex-end; }
+  .row .txt { padding: 14px 16px 18px 0; max-width: 460px; border-right: 2px solid; }
+  .row .pc { font: 700 30px/1 var(--sys); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .row .nm { font-weight: 600; margin: 6px 0 2px; }
+  .row p { margin: 0; color: var(--label-2); font-size: 15px; }
+  .rows { overflow: hidden; }
+  .row .txt { position: relative; }
+  .row .txt::after { content: ""; position: absolute; right: -2px; bottom: 100%; height: 2000px; border-right: 2px solid; border-color: inherit; }
+  .plug { margin: 26px 0 0; color: var(--label-2); max-width: 40em; }
+  .plug b { color: var(--label); }
 
-  .how { display: grid; gap: 28px; }
-  @media (min-width: 760px) { .how { grid-template-columns: repeat(2, 1fr); } }
-  .how h3 { font: 700 20px "Bricolage Grotesque", sans-serif; margin: 0 0 6px; }
-  .how p { margin: 0; color: var(--ink-2); }
+  .menu-sec { padding: 56px 0 64px; border-top: 1px solid var(--sep); display: grid; gap: 36px; align-items: start; }
+  @media (min-width: 820px) { .menu-sec { grid-template-columns: 1fr 300px; gap: 64px; } }
+  .menu-sec h3 { font: 600 17px/1.3 var(--sys); margin: 26px 0 4px; }
+  .menu-sec p { margin: 0; color: var(--label-2); max-width: 36em; }
+  .menu-sec p + p { margin-top: 10px; }
+  .nsmenu {
+    width: 280px; max-width: 100%; padding: 5px; border-radius: 10px; font: 13px/1 var(--sys); color: var(--label);
+    background: rgba(246,246,246,0.92); box-shadow: 0 0 0 0.5px rgba(0,0,0,0.22), 0 12px 32px rgba(0,0,0,0.18);
+  }
+  .nsmenu .mi { display: flex; align-items: center; height: 22px; padding: 0 9px 0 22px; border-radius: 5px; position: relative; white-space: nowrap; }
+  .nsmenu .off { color: var(--label-3); }
+  .nsmenu .hl { background: var(--blue); color: #fff; }
+  .nsmenu .chk::before { content: ""; position: absolute; left: 8px; top: 6px; width: 7px; height: 4px; border-left: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: rotate(-45deg); }
+  .nsmenu .more::after { content: ""; margin-left: auto; width: 5px; height: 5px; border-top: 1.5px solid var(--label-2); border-right: 1.5px solid var(--label-2); transform: rotate(45deg); }
+  .nsmenu hr { border: 0; height: 1px; background: var(--sep); margin: 5px 9px; }
+  .menu-cap { font-size: 13px; color: var(--label-2); margin: 10px 0 0 4px; }
 
-  .faq { max-width: 760px; }
-  .faq details { border-bottom: 1px solid var(--line); padding: 18px 0; }
-  .faq summary { cursor: pointer; font: 700 19px "Bricolage Grotesque", sans-serif; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
-  .faq summary::-webkit-details-marker { display: none; }
-  .faq summary::after { content: "+"; font-weight: 500; }
-  .faq details[open] summary::after { content: "\2212"; }
-  .faq p { color: var(--ink-2); margin: 10px 0 0; }
+  .faq { padding: 56px 0 48px; border-top: 1px solid var(--sep); }
+  .faq dl { margin: 22px 0 0; max-width: 720px; }
+  .faq dt { font-weight: 600; margin: 22px 0 3px; }
+  .faq dd { margin: 0; color: var(--label-2); }
 
-  .story { background: var(--ink); color: var(--paper); border-radius: 18px; padding: 32px; border: 0; margin: 0 0 64px; }
-  .story p { font-size: 19px; max-width: 38em; margin: 0; }
-  .story p + p { margin-top: 12px; color: #c9c1b3; font-size: 16px; }
-
-  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; display: flex; flex-wrap: wrap; gap: 12px 24px; justify-content: space-between; font-size: 15px; color: var(--ink-2); }
-  footer a { color: var(--ink); }
+  footer { border-top: 1px solid var(--sep); padding: 22px 0 36px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; font-size: 14px; color: var(--label-2); }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <a class="brand" href="/">Last Call<span>.</span></a>
-    <nav>
-      <a href="#levels">Levels</a>
-      <a href="#faq">FAQ</a>
-      <a href="https://github.com/affirmitv/lastagentcall">GitHub</a>
-    </nav>
-  </header>
 
-  <div class="hero">
-    <div>
-      <h1>Your agents get a last call before the battery dies.</h1>
-      <p class="lede">Last Call is a free, open source Claude Code hook for macOS. When your laptop runs low, every agent session finishes its step, writes a handoff note, commits its work to a branch, and stops. Nothing gets lost when the screen goes black.</p>
+<div class="desktop">
+  <div class="menubar" aria-hidden="true">
+    <div class="left">
+      <span><svg width="14" height="16" viewBox="0 0 24 24"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg></span>
+      <span class="app">Terminal</span>
+      <span class="hide-s">Shell</span><span class="hide-s">Edit</span><span class="hide-s">View</span><span class="hide-s">Window</span><span class="hide-s">Help</span>
+    </div>
+    <div class="right">
+      <span class="lcitem" id="lc">LC 34%</span>
+      <span class="hide-xs"><svg width="17" height="13" viewBox="0 0 17 13"><path d="M8.5 2.2c2.5 0 4.8 1 6.5 2.6l1.1-1.2A10.9 10.9 0 0 0 8.5.6 10.9 10.9 0 0 0 .9 3.6L2 4.8a9.3 9.3 0 0 1 6.5-2.6zm0 3.3c1.6 0 3 .6 4.1 1.6l1.1-1.2a7.7 7.7 0 0 0-10.4 0l1.1 1.2a6 6 0 0 1 4.1-1.6zm0 3.3c.7 0 1.3.3 1.8.7L8.5 11.4 6.7 9.5c.5-.4 1.1-.7 1.8-.7z"/></svg></span>
+      <span><svg id="batt" width="27" height="13" viewBox="0 0 27 13"><rect x="0.75" y="0.75" width="22.5" height="11.5" rx="3.3" fill="none" stroke="#fff" stroke-opacity="0.55" stroke-width="1.1"/><rect x="24.3" y="4.2" width="1.8" height="4.6" rx="0.9" fill="#fff" fill-opacity="0.55"/><rect id="battfill" x="2.4" y="2.4" width="6.4" height="8.2" rx="1.8" fill="#fff"/></svg></span>
+      <span class="hide-s"><svg width="15" height="15" viewBox="0 0 15 15"><path d="M6.2 1.2a5 5 0 1 0 3.1 8.9l3.7 3.7 1.1-1.1-3.7-3.7a5 5 0 0 0-4.2-7.8zm0 1.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z"/></svg></span>
+      <span class="hide-xs"><svg width="16" height="14" viewBox="0 0 16 14"><path d="M4 1h8a3 3 0 0 1 0 6H4a3 3 0 0 1 0-6zm0 1.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2zM4 8h8a3 3 0 0 1 0 6H4a3 3 0 0 1 0-6zm8 1.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2z"/></svg></span>
+      <span class="clock" id="clock">Sat Sep 26 11:14 PM</span>
+    </div>
+  </div>
+
+  <div class="notice" id="notice" aria-hidden="true">
+    <span class="ico"><svg width="22" height="12" viewBox="0 0 27 13"><rect x="0.75" y="0.75" width="22.5" height="11.5" rx="3.3" fill="none" stroke="#1d1d1f" stroke-width="1.4"/><rect x="24.3" y="4.2" width="1.8" height="4.6" rx="0.9" fill="#1d1d1f"/><rect id="nfill" x="2.4" y="2.4" width="2.4" height="8.2" rx="1.4" fill="#ff3b30"/></svg></span>
+    <span><b id="ntitle">Last Call: Wrap up</b><span id="nbody">Battery at 9%. Agents are writing handoff notes and committing WIP.</span></span>
+    <span class="when">now</span>
+  </div>
+
+  <div class="stage">
+    <div class="intro">
+      <p class="name">Last Call, for Claude Code on macOS</p>
+      <h1>When your battery runs low, every agent writes down what it was doing, commits, and stops.</h1>
+      <p class="note">My Mac died tonight with a dozen agents running and I lost track of what they did. So I built Last Call.</p>
+      <p class="sig">Steven Ojo</p>
       <div class="install">
-        <code id="cmd"><b>curl</b> -fsSL https://lastagentcall.com/install.sh | bash</code>
+        <code id="cmd">curl -fsSL https://lastagentcall.com/install.sh | bash</code>
         <button type="button" id="copy">Copy</button>
       </div>
-      <p class="sub">macOS 13 or later. Merges into your existing hooks and backs up your settings first. <a href="https://github.com/affirmitv/lastagentcall/blob/main/install.sh">Read the script</a>.</p>
+      <p class="fine">Free and open source. macOS 13 or later. Merges into your existing hooks and backs up your settings first. <a href="https://github.com/affirmitv/lastagentcall/blob/main/install.sh">Read the script</a></p>
     </div>
-    <div class="demo" aria-label="A battery draining from 34 percent to 5 percent while Last Call steps through its three levels">
-      <div class="battery">
-        <div class="cell"><div class="fill"></div>
-          <div class="pct"><span class="p1">34%</span><span class="p2">20%</span><span class="p3">10%</span><span class="p4">5%</span></div>
-        </div>
-        <div class="nub"></div>
-      </div>
-      <ul class="log">
-        <li class="l1"><strong>20%</strong>Finish the current step. No new builds or subagent fan-outs.</li>
-        <li class="l2"><strong>10%</strong>Write HANDOFF.md, commit to lastcall/wip, stop.</li>
-        <li class="l3"><strong>5%</strong>Only the handoff note and git are allowed.</li>
-      </ul>
+
+    <div class="term" role="img" aria-label="A Claude Code session in Terminal. At 20 percent the agent is told to finish its step. At 9 percent a subagent is blocked, the agent writes .lastcall/HANDOFF.md, commits to a lastcall/wip branch, and stops.">
+      <div class="tbar"><div class="lights"><i></i><i></i><i></i></div><div class="ttl">~/code/checkout-api  ·  claude</div></div>
+      <div class="screen" id="screen"></div>
     </div>
   </div>
+</div>
 
-  <div class="story">
-    <p>My Mac died tonight with a dozen agents running and I lost track of what they did. So I built Last Call.</p>
-    <p>Steven Ojo, Affirmi</p>
-  </div>
+<main class="wrap">
+  <section class="levels" id="levels">
+    <h2>What happens at each level</h2>
+    <p class="lede">Last Call checks the battery on every prompt and tool call. It takes about 10 milliseconds, never touches the network, and if anything goes wrong it steps aside and lets the tool run.</p>
 
-  <section id="levels">
-    <h2>Three levels, then silence.</h2>
-    <p class="intro">Last Call reads your battery on every prompt and tool call. It takes about 10 milliseconds, makes no network calls, and if anything goes wrong it steps aside and lets the tool run.</p>
-    <div class="levels">
-      <div class="level a">
-        <div class="num">20%</div>
-        <h3>Heads up</h3>
-        <p>Each agent is told the battery level and asked to finish the current step without starting long jobs like builds, full test suites, or subagent fan-outs.</p>
-      </div>
-      <div class="level b">
-        <div class="num">10%</div>
-        <h3>Wrap up</h3>
-        <p>Subagents and long commands are blocked. The agent writes <b>.lastcall/HANDOFF.md</b> with what was done, what is in flight, the exact next steps and the files touched, then commits to a <b>lastcall/wip</b> branch without pushing, and stops.</p>
-      </div>
-      <div class="level c">
-        <div class="num">5%</div>
-        <h3>Last call</h3>
-        <p>Every tool is blocked except writing the handoff note and git. Whatever the agent was doing, the record of it gets saved.</p>
+    <div class="scale" id="scale" aria-label="Battery scale from 100 percent to 0 percent with levels at 20, 10 and 5 percent">
+      <div class="ticks"><span style="left:0">100%</span><span style="left:50%">50%</span><span style="left:80%">20</span><span class="n" style="left:90%">10</span><span class="n" style="left:95%">5</span><span style="left:100%">0</span></div>
+      <div class="bar"><i style="width:80%;background:var(--green)"></i><i style="width:10%;background:var(--yellow)"></i><i style="width:5%;background:var(--orange)"></i><i style="width:5%;background:var(--red)"></i></div>
+      <div class="rows">
+        <div class="row" style="padding-right:20%"><div class="txt" style="border-color:var(--yellow)">
+          <div class="pc">20%</div><div class="nm">Heads up</div>
+          <p>Every agent is told the battery level and asked to finish the current step without starting long jobs: builds, full test suites, subagent fan-outs.</p>
+        </div></div>
+        <div class="row" style="padding-right:10%"><div class="txt" style="border-color:var(--orange)">
+          <div class="pc">10%</div><div class="nm">Wrap up</div>
+          <p>Subagents and long commands are blocked. The agent writes <code>.lastcall/HANDOFF.md</code> with what was done, what is in flight, the exact next steps and the files touched, commits to a <code>lastcall/wip</code> branch without pushing, and stops.</p>
+        </div></div>
+        <div class="row" style="padding-right:5%"><div class="txt" style="border-color:var(--red)">
+          <div class="pc">5%</div><div class="nm">Last call</div>
+          <p>Every tool is blocked except writing the handoff note and git. Whatever the agent was doing, the record of it gets saved.</p>
+        </div></div>
       </div>
     </div>
-    <p class="plugged"><b>Plug in</b> and it all clears. No messages, no blocks. On a desktop Mac with no battery, Last Call does nothing at all.</p>
+    <p class="plug"><b>Plugged in, it all clears.</b> No messages, no blocks. On a Mac with no battery, Last Call does nothing at all. Thresholds live in <code>~/.lastcall/config</code>.</p>
   </section>
 
-  <section>
-    <h2>How it works</h2>
-    <p class="intro">Two small pieces. The hook does the real work and needs nothing else.</p>
-    <div class="how">
-      <div>
-        <h3>A Claude Code hook</h3>
-        <p>A short shell script runs on PreToolUse, PostToolUse and UserPromptSubmit. It reads <b>pmset</b>, adds context the model sees, and denies tools with a reason when the level calls for it. Thresholds live in ~/.lastcall/config.</p>
+  <section class="menu-sec">
+    <div>
+      <h2>A hook, and a menu bar item</h2>
+      <h3>The hook does the work</h3>
+      <p>A short shell script runs on PreToolUse, PostToolUse and UserPromptSubmit. It reads <code>pmset</code>, adds context the model sees, and denies tools with a reason when the level calls for it. It needs nothing else.</p>
+      <h3>The menu bar item keeps you in the loop</h3>
+      <p>It shows your battery, how many Claude processes are running and the current level, and notifies you when the level changes. <b>Wrap up all agents now</b> sends every session to the 10% level on demand, plugged in or not.</p>
+      <p>It is built from source on your Mac during install, so there is nothing to notarize and nothing phoning home.</p>
+    </div>
+    <div>
+      <div class="nsmenu" aria-label="The Last Call menu">
+        <div class="mi off">Battery 34%</div>
+        <div class="mi off">Claude processes running: 12</div>
+        <div class="mi off">Last Call level: Normal</div>
+        <hr>
+        <div class="mi hl">Wrap up all agents now</div>
+        <div class="mi off">Resume normal</div>
+        <hr>
+        <div class="mi more">Open handoff notes</div>
+        <div class="mi">Settings</div>
+        <div class="mi chk">Launch at login</div>
+        <hr>
+        <div class="mi">Quit</div>
       </div>
-      <div>
-        <h3>A menu bar app</h3>
-        <p>Shows your battery, how many Claude processes are running, and the current level. "Wrap up all agents now" sends every session to the 10% level on demand. It notifies you at each level and lists recent handoff notes. Built from source on your Mac during install.</p>
-      </div>
+      <p class="menu-cap">The menu, as it looks on your Mac.</p>
     </div>
   </section>
 
-  <section id="faq">
+  <section class="faq" id="faq">
     <h2>Questions</h2>
-    <div class="faq">
-      <details open>
-        <summary>What does it actually do?</summary>
-        <p>It gives every running Claude Code session a warning and then a clear instruction to save its state: a handoff note in the project and a work in progress commit on its own branch. At the lowest level it blocks everything else so the save is the last thing that happens.</p>
-      </details>
-      <details>
-        <summary>Does it move my sessions to another machine?</summary>
-        <p>No. It keeps the record of what happened so you can pick up anywhere. On the same Mac, run <b>claude --resume</b>. On any machine, pull the lastcall/wip branch and start a fresh session that reads .lastcall/HANDOFF.md.</p>
-      </details>
-      <details>
-        <summary>Will it break my existing hooks or slow me down?</summary>
-        <p>The installer backs up ~/.claude/settings.json and merges its three entries next to yours. The hook runs in about 10 milliseconds, never touches the network, and fails open: if it cannot read the battery or the input, the tool runs as normal.</p>
-      </details>
-      <details>
-        <summary>Does it push my code anywhere?</summary>
-        <p>No. The commit stays on a local branch. Pushing is up to you.</p>
-      </details>
-      <details>
-        <summary>Can I try it without draining my battery?</summary>
-        <p>Yes. Start a session with <b>LASTCALL_FAKE_BATTERY=8 claude</b> and watch it wrap up. Or use "Wrap up all agents now" from the menu bar.</p>
-      </details>
-      <details>
-        <summary>How do I remove it?</summary>
-        <p><b>curl -fsSL https://lastagentcall.com/uninstall.sh | bash</b> removes the hook entries, the app and ~/.lastcall, and leaves your other settings exactly as they were.</p>
-      </details>
-      <details>
-        <summary>What does it cost?</summary>
-        <p>Nothing. It is MIT licensed and the code is on GitHub.</p>
-      </details>
-    </div>
+    <dl>
+      <dt>Does it move my sessions to another machine?</dt>
+      <dd>No. It keeps the record so you can pick up anywhere. On the same Mac, run <code>claude --resume</code>. Anywhere else, pull the lastcall/wip branch and start a session that reads .lastcall/HANDOFF.md.</dd>
+      <dt>Will it break my existing hooks?</dt>
+      <dd>No. The installer backs up ~/.claude/settings.json and adds its three entries next to yours. If the hook cannot read the battery or its input, the tool runs as normal.</dd>
+      <dt>Does it push my code anywhere?</dt>
+      <dd>No. The commit stays on a local branch. Pushing is up to you.</dd>
+      <dt>Can I try it without draining my battery?</dt>
+      <dd>Start a session with <code>LASTCALL_FAKE_BATTERY=8 claude</code>, or pick Wrap up all agents now from the menu bar.</dd>
+      <dt>How do I remove it?</dt>
+      <dd><code>curl -fsSL https://lastagentcall.com/uninstall.sh | bash</code> removes the hook entries, the app and ~/.lastcall, and leaves your other settings as they were.</dd>
+      <dt>What does it cost?</dt>
+      <dd>Nothing. MIT licensed.</dd>
+    </dl>
   </section>
 
   <footer>
     <span>Made by <a href="https://affirmi.tv">Affirmi</a></span>
-    <span><a href="https://github.com/affirmitv/lastagentcall">Source on GitHub</a> · MIT license</span>
+    <a href="https://github.com/affirmitv/lastagentcall">github.com/affirmitv/lastagentcall</a>
   </footer>
-</div>
+</main>
+
 <script>
+(function () {
+  // Copy button
   document.getElementById('copy').addEventListener('click', function () {
-    var b = this;
-    var text = document.getElementById('cmd').textContent;
+    var b = this, text = document.getElementById('cmd').textContent;
     var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1600); };
-    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+    try {
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function (e) { console.error(e); });
+    } catch (e) { console.error(e); }
   });
+
+  // Menu bar clock
+  var clock = document.getElementById('clock');
+  function tick() {
+    var d = new Date();
+    var day = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(/,/g, '');
+    var t = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    clock.textContent = (window.innerWidth < 420 ? '' : day + '  ') + t;
+  }
+  tick(); setInterval(tick, 15000);
+
+  // Battery: menu bar item, system icon, notifications
+  var lc = document.getElementById('lc'), fill = document.getElementById('battfill');
+  var notice = document.getElementById('notice'), nt = document.getElementById('ntitle'), nb = document.getElementById('nbody'), nfill = document.getElementById('nfill');
+  var names = ['Normal', 'Warning', 'Wrap up', 'Critical'];
+  var bodies = [null,
+    function (p) { return 'Battery at ' + p + '. Agents will finish the current step and skip long jobs.'; },
+    function (p) { return 'Battery at ' + p + '. Agents are writing handoff notes and committing WIP.'; },
+    function (p) { return 'Battery at ' + p + '. Agents can only write handoff notes and commit.'; }];
+  var lastLevel = 0, noticeTimer = null;
+  function levelOf(p) { return p <= 5 ? 3 : p <= 10 ? 2 : p <= 20 ? 1 : 0; }
+  function setPct(p) {
+    var lv = levelOf(p), s = p + '%';
+    lc.innerHTML = 'LC ' + s + (lv ? '<span class="lvl">' + names[lv] + '</span>' : '');
+    fill.setAttribute('width', Math.max(1.2, 18.6 * p / 100).toFixed(2));
+    fill.setAttribute('fill', p <= 10 ? '#ff453a' : '#fff');
+    if (lv > lastLevel) {
+      nt.textContent = 'Last Call: ' + names[lv];
+      nb.textContent = bodies[lv](s);
+      nfill.setAttribute('width', Math.max(1.2, 18.6 * p / 100).toFixed(2));
+      nfill.setAttribute('fill', p <= 10 ? '#ff3b30' : p <= 20 ? '#ff9500' : '#34c759');
+      notice.classList.add('on');
+      clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(function () { notice.classList.remove('on'); }, 4200);
+    }
+    lastLevel = lv;
+  }
+
+  // The session. Hook text is exactly what bin/lastcall-hook.sh prints.
+  var TS = '20260926-231408';
+  var HANDOFF = 'Write .lastcall/HANDOFF.md at the project root with four sections: what was done, what is in flight, exact next steps, files touched. Then commit work in progress on a new branch without pushing: git switch -c lastcall/wip-' + TS + ' &amp;&amp; git add -A &amp;&amp; git commit -m "Last Call WIP". Then stop and tell the user where the handoff is.';
+  var D = '<span class="dot">●</span> ', OK = '<span class="ok">●</span> ', NO = '<span class="no">●</span> ', E = '⎿  ';
+  var script = [
+    [0,    { pct: 34 }],
+    [300,  { prompt: 'move cart totals to integer cents, then run the full test suite' }],
+    [900,  { html: D + 'Moving totals to integer cents first, then the suite.', cls: 'gap' }],
+    [900,  { html: OK + '<span class="tool">Read</span>(src/cart/totals.ts)<span class="sub">' + E + 'Read 142 lines</span>', cls: 'gap' }],
+    [700,  { pct: 29 }],
+    [900,  { html: OK + '<span class="tool">Update</span>(src/cart/totals.ts)<span class="sub">' + E + 'Updated src/cart/totals.ts with 14 additions and 9 removals</span>', cls: 'gap' }],
+    [600,  { pct: 24 }],
+    [700,  { pct: 20 }],
+    [500,  { html: '<span class="sub"><span class="hook">' + E + 'PostToolUse hook: Last Call: Battery at 20%. Finish the current step. Do not start long jobs (builds, full test suites, subagent fan-outs).</span></span>' }],
+    [1300, { html: D + 'Battery is at 20%. I will finish the tax rounding in this step and hold the full suite.', cls: 'gap' }],
+    [1000, { html: OK + '<span class="tool">Update</span>(src/cart/tax.ts)<span class="sub">' + E + 'Updated src/cart/tax.ts with 6 additions and 4 removals</span>', cls: 'gap' }],
+    [700,  { pct: 15 }],
+    [800,  { pct: 12 }],
+    [700,  { html: D + 'Step done. Checking the change with a parallel test run.', cls: 'gap' }],
+    [500,  { pct: 9 }],
+    [700,  { html: NO + '<span class="tool">Task</span>(Run integration tests in parallel)<span class="sub"><span class="deny">' + E + 'Blocked by PreToolUse hook: Last Call: Battery at 9%. Wrap up now. Subagents and long commands are blocked. ' + HANDOFF + '</span></span>', cls: 'gap' }],
+    [1900, { html: D + 'Wrapping up. Writing the handoff first.', cls: 'gap' }],
+    [900,  { html: OK + '<span class="tool">Write</span>(.lastcall/HANDOFF.md)<span class="sub">' + E + 'Wrote 23 lines to .lastcall/HANDOFF.md<span class="in">## What was done</span><span class="in">## In flight</span><span class="in">## Exact next steps</span><span class="in">## Files touched</span></span>', cls: 'gap' }],
+    [900,  { pct: 7 }],
+    [900,  { pct: 5 }],
+    [800,  { html: OK + '<span class="tool">Bash</span>(git switch -c lastcall/wip-' + TS + ' &amp;&amp; git add -A &amp;&amp; git commit -m "Last Call WIP")<span class="sub">' + E + 'Switched to a new branch \'lastcall/wip-' + TS + '\'<span class="in">[lastcall/wip-' + TS + ' 8c41e0d] Last Call WIP</span><span class="in"> 3 files changed, 49 insertions(+), 13 deletions(-)</span></span>', cls: 'gap' }],
+    [1300, { html: D + 'Stopping here. The handoff is in .lastcall/HANDOFF.md and the work is committed on lastcall/wip-' + TS + ' (not pushed). Tests were not run; that is the first next step.', cls: 'gap' }],
+    [600,  { html: '<span class="pr u">&gt; <span class="cursor">&nbsp;</span></span>', cls: 'gap' }],
+    [6500, { restart: true }]
+  ];
+
+  var screen = document.getElementById('screen');
+  var i = 0, timer = null;
+  function add(html, cls) {
+    var d = document.createElement('div');
+    d.className = 'ln' + (cls ? ' ' + cls : '');
+    d.innerHTML = html;
+    screen.appendChild(d);
+    while (screen.children.length > 40) screen.removeChild(screen.firstChild);
+    return d;
+  }
+  function typePrompt(text, cb) {
+    var d = add('<span class="pr u">&gt; <span class="t"></span><span class="cursor">&nbsp;</span></span>');
+    var t = d.querySelector('.t'), n = 0;
+    (function step() {
+      t.textContent = text.slice(0, ++n);
+      if (n < text.length) timer = setTimeout(step, 28 + Math.random() * 40);
+      else timer = setTimeout(function () { d.querySelector('.cursor').remove(); cb(); }, 350);
+    })();
+  }
+  function reset() {
+    screen.innerHTML = '';
+    add('<span class="cl">✻</span> <span class="u">Claude Code  ·  ~/code/checkout-api</span>');
+    lastLevel = 0;
+    notice.classList.remove('on');
+  }
+  function run() {
+    if (i >= script.length) i = 0;
+    var s = script[i++];
+    timer = setTimeout(function () {
+      var a = s[1];
+      if (a.restart) { reset(); i = 0; return run(); }
+      if (a.pct !== undefined) setPct(a.pct);
+      if (a.html) add(a.html, a.cls);
+      if (a.prompt) return typePrompt(a.prompt, run);
+      run();
+    }, s[0]);
+  }
+  reset();
+  run();
+})();
 </script>
 </body>
 </html>
