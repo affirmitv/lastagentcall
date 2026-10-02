@@ -90,7 +90,7 @@ Test hooks: `LASTCALL_FAKE_BATTERY=8` (on battery at 8%), `LASTCALL_FAKE_BATTERY
 
 ## Install count
 
-The site shows how many times the installer has run. It is counted on the server, not on your Mac: `install.sh` downloads `bin/lastcall-hook.sh` from lastagentcall.com, and nothing else does, so the site function in `api/hook.js` counts those downloads from curl, at most one per network per UTC day. It stores only a salted hash of the day and the network address, never the address. Installs from a checkout are not counted, and the hook and the app still make no network calls. Counting started on 2026-10-02.
+The site shows how many times the installer has run. It is counted on the server, not on your Mac: `install.sh` downloads `bin/lastcall-hook.sh` from lastagentcall.com, and nothing else does, so the site function in `api/hook.js` counts those downloads from curl, at most one per network per UTC day. It stores only a salted hash of the day and the network address, never the address. Installs from a checkout are not counted, and the hook and the app still make no network calls. Live counting started on 2026-10-02. Installs from launch (2026-09-26) up to then were counted by the same rule from Vercel's recorded request metrics for that file, never estimated; the source, window and method are in [`backfill.json`](backfill.json). Our own test machines are left out.
 
 ## Tests
 

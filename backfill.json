@@ -1,0 +1,20 @@
+{
+  "installs": 0,
+  "from": "2026-09-27T00:00:00Z",
+  "to": "2026-10-02T23:30:13Z",
+  "note": "Installer runs before live counting started (launch, Sep 26 PT, up to the first production deploy of api/hook.js). Recorded data only, never an estimate.",
+  "source": "Vercel Observability metric vercel.request.count for project lastagentcall, filtered to request_path /bin/lastcall-hook.sh, grouped by day, client_ip, client_user_agent, environment and hostname. Retention covers the whole window (first requests on 2026-09-27 UTC).",
+  "method": "Same rule as live counting: production downloads of /bin/lastcall-hook.sh by curl (only install.sh downloads that file, in every released version), one per network per UTC day.",
+  "found": [
+    { "day": "2026-09-27", "network": "71.198.95.223", "downloads": 6, "counted": false },
+    { "day": "2026-09-28", "network": "71.198.95.223", "downloads": 1, "counted": false },
+    { "day": "2026-10-02", "network": "71.198.95.223", "downloads": 1, "counted": false }
+  ],
+  "excluded": "71.198.95.223 is the Affirmi build network (Gilbert and Paws share it), so these are our own launch tests. Preview deployments and the 2026-10-02 verification runs (174.221.106.49) are excluded too. No other network downloaded the hook in the window.",
+  "checked_and_not_used": [
+    "GitHub traffic for affirmitv/lastagentcall (clones 2026-09-27..10-01: 91 clones, 55 unique cloners): a clone is not an install and cannot be told apart from bots, CI and our own agents, and live counting does not count checkout installs either.",
+    "AppSpace log drain to app_logs: the drain is attached only to the AppSpace web project, so lastagentcall requests were never sent there.",
+    "Vercel request logs API: retains only the last few minutes of requests for this project, nothing from the window.",
+    "Downloads of /install.sh and /SHA256SUMS by browsers, crawlers and a Linux curl: they fetch those files but never the hook, so no install ran."
+  ]
+}

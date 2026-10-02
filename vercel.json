@@ -31,7 +31,8 @@
       "maxDuration": 10
     },
     "api/count.js": {
-      "maxDuration": 10
+      "maxDuration": 10,
+      "includeFiles": "backfill.json"
     }
   }
 }
