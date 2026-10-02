@@ -26,6 +26,10 @@ export async function recordInstall(req) {
   if (!salt) { console.error('install count: COUNT_SALT is not set, not recording'); return false; }
   const ip = clientIp(req);
   if (!ip) { console.error('install count: no client IP, not recording'); return false; }
+  // Our own build and test networks (env COUNT_EXCLUDE_IPS, comma separated,
+  // kept out of the public repo) never count.
+  const own = String(process.env.COUNT_EXCLUDE_IPS || '').split(',').map((x) => x.trim()).filter(Boolean);
+  if (own.includes(ip)) return false;
   const day = new Date().toISOString().slice(0, 10);
   const key = createHash('sha256').update(salt + '|' + day + '|' + ip).digest('hex').slice(0, 40);
   // Same network, same day: same name, so the write overwrites instead of adding.
