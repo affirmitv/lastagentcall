@@ -8,7 +8,8 @@ import { createHash } from 'node:crypto';
 import { put, list } from '@vercel/blob';
 
 export const SINCE = '2026-10-02';
-const PREFIX = 'installs/';
+// Previews count into their own folder so testing never touches the public number.
+const PREFIX = process.env.VERCEL_ENV === 'production' ? 'installs/' : 'preview-installs/';
 
 function clientIp(req) {
   const fwd = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
