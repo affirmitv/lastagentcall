@@ -1,13 +1,37 @@
 {
   "buildCommand": "sh scripts/build-site.sh",
   "outputDirectory": "site",
-  "installCommand": "",
+  "installCommand": "npm install --no-audit --no-fund",
   "framework": null,
   "cleanUrls": false,
   "headers": [
-    { "source": "/(.*)\\.(sh|py|swift)", "headers": [
-      { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
-      { "key": "Cache-Control", "value": "public, max-age=300" }
-    ]}
-  ]
+    {
+      "source": "/(.*)\\.(sh|py|swift)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/bin/lastcall-hook.sh",
+      "destination": "/api/hook"
+    }
+  ],
+  "functions": {
+    "api/hook.js": {
+      "includeFiles": "bin/lastcall-hook.sh",
+      "maxDuration": 10
+    },
+    "api/count.js": {
+      "maxDuration": 10
+    }
+  }
 }

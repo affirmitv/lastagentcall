@@ -99,6 +99,18 @@
   }
   .fine { font-size: 13px; color: rgba(255,255,255,0.6); margin: 10px 0 0; }
   .fine a { color: #fff; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgba(255,255,255,0.4); }
+  .count { font-size: 15px; color: rgba(255,255,255,0.88); margin: 22px 0 0; font-variant-numeric: tabular-nums; }
+  .count b { color: #fff; font-weight: 700; }
+  .count a { color: rgba(255,255,255,0.6); font-size: 13px; margin-left: 6px; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgba(255,255,255,0.3); }
+  .share { margin: 14px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+  .share p { margin: 0 6px 0 0; font-size: 14px; color: rgba(255,255,255,0.75); flex-basis: 100%; }
+  @media (min-width: 720px) { .share p { flex-basis: auto; } }
+  .share a, .share button {
+    display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 6px; cursor: pointer;
+    font: 600 13px var(--sys); color: #fff; text-decoration: none; border: 0;
+    background: rgba(255,255,255,0.14); box-shadow: 0 0 0 0.5px rgba(255,255,255,0.22) inset;
+  }
+  .share a:hover, .share button:hover { background: rgba(255,255,255,0.22); }
 
   /* Terminal.app window */
   .term {
@@ -179,6 +191,7 @@
 
   footer { border-top: 1px solid var(--sep); padding: 22px 0 36px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; font-size: 14px; color: var(--label-2); }
 </style>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
@@ -217,6 +230,14 @@
         <button type="button" id="copy">Copy</button>
       </div>
       <p class="fine">Free and open source. macOS 13 or later. Merges into your existing hooks and backs up your settings first. <a href="https://github.com/affirmitv/lastagentcall/blob/main/install.sh">Read the script</a></p>
+      <p class="count" id="count" hidden></p>
+      <div class="share" id="share">
+        <p>If Last Call saved your work, share it</p>
+        <a data-net="threads" target="_blank" rel="noopener" href="https://www.threads.net/intent/post?text=Last%20Call%20makes%20my%20Claude%20Code%20agents%20write%20a%20handoff%20note%20and%20commit%20before%20my%20Mac%20battery%20dies.%20Free%20and%20open%20source.%20https%3A%2F%2Flastagentcall.com%2F%3Futm_source%3Dthreads%26utm_medium%3Dsocial%26utm_campaign%3Dshare_button">Threads</a>
+        <a data-net="x" target="_blank" rel="noopener" href="https://x.com/intent/post?text=Last%20Call%20makes%20my%20Claude%20Code%20agents%20write%20a%20handoff%20note%20and%20commit%20before%20my%20Mac%20battery%20dies.%20Free%20and%20open%20source.&amp;url=https%3A%2F%2Flastagentcall.com%2F%3Futm_source%3Dx%26utm_medium%3Dsocial%26utm_campaign%3Dshare_button">X</a>
+        <a data-net="linkedin" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Flastagentcall.com%2F%3Futm_source%3Dlinkedin%26utm_medium%3Dsocial%26utm_campaign%3Dshare_button">LinkedIn</a>
+        <button type="button" data-net="copy" id="copylink">Copy link</button>
+      </div>
     </div>
 
     <div class="term" role="img" aria-label="A Claude Code session in Terminal. At 20 percent the agent is told to finish its step. At 9 percent a subagent is blocked, the agent writes .lastcall/HANDOFF.md, commits to a lastcall/wip branch, and stops.">
@@ -297,6 +318,8 @@
       <dd><code>curl -fsSL https://lastagentcall.com/uninstall.sh | bash</code> removes the hook entries, the app and ~/.lastcall, and leaves your other settings as they were.</dd>
       <dt>How do I know the installer got the right files?</dt>
       <dd>When piped through curl, install.sh checks every file it downloads against <a href="/SHA256SUMS">SHA256SUMS</a> and installs nothing on a mismatch. That catches broken or mismatched downloads. The list is served from this site too, so to check provenance, compare it with the copy in the GitHub repo, or install from a checkout.</dd>
+      <dt id="how-counted">How is the install count measured?</dt>
+      <dd>The installer downloads the hook script from this site, and nothing else downloads it, so the site counts those downloads, at most one per network per day. The count is a salted hash of the day and the network address; the address itself is not kept, and nothing about you or your Mac is sent. Runs from a checkout are not counted. Counting started on October 2, 2026, and the number shows here once it is more than a handful.</dd>
       <dt>What does it cost?</dt>
       <dd>Nothing. MIT licensed.</dd>
     </dl>
@@ -311,13 +334,46 @@
 <script>
 (function () {
   // Copy button
+  function track(name, props) {
+    try { window.va('event', props ? { name: name, data: props } : { name: name }); } catch (e) { console.error(e); }
+  }
   document.getElementById('copy').addEventListener('click', function () {
     var b = this, text = document.getElementById('cmd').textContent;
     var done = function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1600); };
+    track('Install Copied');
     try {
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function (e) { console.error(e); });
     } catch (e) { console.error(e); }
   });
+
+  // Share row
+  var share = document.getElementById('share');
+  share.addEventListener('click', function (ev) {
+    var t = ev.target.closest('[data-net]');
+    if (t) track('Share Clicked', { network: t.getAttribute('data-net') });
+  });
+  document.getElementById('copylink').addEventListener('click', function () {
+    var b = this, url = 'https://lastagentcall.com/?utm_source=copy_link&utm_medium=share&utm_campaign=share_button';
+    var done = function () { b.textContent = 'Link copied'; setTimeout(function () { b.textContent = 'Copy link'; }, 1600); };
+    try {
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, function (e) { console.error(e); });
+    } catch (e) { console.error(e); }
+  });
+
+  // Install count: real installer runs only (see api/count.js). Hidden until
+  // the number means something; ?count shows it anyway for checking.
+  var SHOW_FROM = 25;
+  fetch('/api/count').then(function (r) {
+    if (!r.ok) throw new Error('count ' + r.status);
+    return r.json();
+  }).then(function (c) {
+    if (typeof c.installs !== 'number') return;
+    if (c.installs < SHOW_FROM && !/[?&]count\b/.test(location.search)) return;
+    var el = document.getElementById('count');
+    var d = new Date(c.since + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+    el.innerHTML = 'Installed <b>' + c.installs.toLocaleString('en-US') + '</b> ' + (c.installs === 1 ? 'time' : 'times') + ' since ' + d + '<a href="#how-counted">How we count</a>';
+    el.hidden = false;
+  }).catch(function (e) { console.error(e); });
 
   // Menu bar clock
   var clock = document.getElementById('clock');

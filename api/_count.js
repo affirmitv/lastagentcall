@@ -1,0 +1,44 @@
+// Install counter shared by api/hook.js and api/count.js.
+//
+// What is counted: downloads of bin/lastcall-hook.sh by curl. Only install.sh
+// downloads that file (uninstall.sh never does), so each one is an installer run.
+// Dedupe: one per network per UTC day. The marker name is a salted SHA-256 of
+// day + IP; the IP itself is never stored, and the marker holds no other data.
+import { createHash } from 'node:crypto';
+import { put, list } from '@vercel/blob';
+
+export const SINCE = '2026-10-02';
+const PREFIX = 'installs/';
+
+function clientIp(req) {
+  const fwd = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return fwd || String(req.headers['x-real-ip'] || '').trim();
+}
+
+export function isInstallerFetch(req) {
+  return /^curl\//i.test(String(req.headers['user-agent'] || ''));
+}
+
+export async function recordInstall(req) {
+  const salt = process.env.COUNT_SALT;
+  if (!salt) { console.error('install count: COUNT_SALT is not set, not recording'); return false; }
+  const ip = clientIp(req);
+  if (!ip) { console.error('install count: no client IP, not recording'); return false; }
+  const day = new Date().toISOString().slice(0, 10);
+  const key = createHash('sha256').update(salt + '|' + day + '|' + ip).digest('hex').slice(0, 40);
+  // Same network, same day: same name, so the write overwrites instead of adding.
+  await put(PREFIX + day + '/' + key, '1', {
+    access: 'public', addRandomSuffix: false, allowOverwrite: true, contentType: 'text/plain',
+  });
+  return true;
+}
+
+export async function countInstalls() {
+  let n = 0, cursor;
+  do {
+    const page = await list({ prefix: PREFIX, limit: 1000, cursor });
+    n += page.blobs.length;
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor);
+  return n;
+}

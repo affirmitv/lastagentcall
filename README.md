@@ -88,6 +88,10 @@ It always exits 0 and makes no network calls. Reading the battery or the hook in
 
 Test hooks: `LASTCALL_FAKE_BATTERY=8` (on battery at 8%), `LASTCALL_FAKE_BATTERY=8:charging`, `LASTCALL_FAKE_BATTERY=none` (desktop), and `LASTCALL_HOME=/some/dir` instead of `~/.lastcall`.
 
+## Install count
+
+The site shows how many times the installer has run. It is counted on the server, not on your Mac: `install.sh` downloads `bin/lastcall-hook.sh` from lastagentcall.com, and nothing else does, so the site function in `api/hook.js` counts those downloads from curl, at most one per network per UTC day. It stores only a salted hash of the day and the network address, never the address. Installs from a checkout are not counted, and the hook and the app still make no network calls. Counting started on 2026-10-02.
+
 ## Tests
 
 ```bash

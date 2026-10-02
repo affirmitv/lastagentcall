@@ -8,3 +8,4 @@ site/app/
 site/scripts/
 .vercel
 .DS_Store
+node_modules/
