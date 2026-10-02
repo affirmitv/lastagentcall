@@ -319,7 +319,7 @@
       <dt>How do I know the installer got the right files?</dt>
       <dd>When piped through curl, install.sh checks every file it downloads against <a href="/SHA256SUMS">SHA256SUMS</a> and installs nothing on a mismatch. That catches broken or mismatched downloads. The list is served from this site too, so to check provenance, compare it with the copy in the GitHub repo, or install from a checkout.</dd>
       <dt id="how-counted">How is the install count measured?</dt>
-      <dd>The installer downloads the hook script from this site, and nothing else downloads it, so the site counts those downloads, at most one per network per day. The count is a salted hash of the day and the network address; the address itself is not kept, and nothing about you or your Mac is sent. Runs from a checkout are not counted. Counting started on October 2, 2026, and the number shows here once it is more than a handful.</dd>
+      <dd>The installer downloads the hook script from this site, and nothing else downloads it, so the site counts those downloads, at most one per network per day. The count is a salted hash of the day and the network address; the address itself is not kept, and nothing about you or your Mac is sent. Runs from a checkout are not counted. Installs from launch on September 26 to October 2, 2026 were counted the same way from Vercel's recorded request data for that file, never estimated, and the details are in backfill.json in the repo. Our own test machines are left out. The number shows here once it is more than a handful.</dd>
       <dt>What does it cost?</dt>
       <dd>Nothing. MIT licensed.</dd>
     </dl>
